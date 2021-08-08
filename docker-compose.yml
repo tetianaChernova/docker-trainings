@@ -1,0 +1,38 @@
+version: '2'
+services:
+  nginx:
+    container_name: my-nginx
+    image: nginx:1.13
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - spring-cloud-network
+
+  app:
+    restart: always
+    build:
+      context: app
+      dockerfile: Dockerfile
+    image: app:latest
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    ports:
+      - 8080:8080
+    command: mvn clean spring-boot:run
+    networks:
+      - spring-cloud-network
+    healthcheck:
+      test: curl -sS http://127.0.0.1/ || echo 1
+      interval: 5s
+      timeout: 10s
+      retries: 3
+networks:
+  spring-cloud-network:
+    driver: bridge
